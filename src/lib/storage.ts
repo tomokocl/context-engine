@@ -1,98 +1,50 @@
 import { Context } from "./types";
-import { supabase } from "./supabase";
 
-export async function getContexts(): Promise<Context[]> {
-  const { data, error } = await supabase
-    .from("contexts")
-    .select("*")
-    .order("created_at", { ascending: false });
+const STORAGE_KEY = "ce-contexts";
 
-  if (error) {
-    console.error("Error fetching contexts:", error);
+function load(): Context[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch {
     return [];
   }
-
-  return (data || []).map((row) => ({
-    id: row.id,
-    title: row.title,
-    content: row.content,
-    categoryType: row.category_type as "private" | "work",
-    category: row.category,
-    tags: row.tags || [],
-    priority: row.priority as "high" | "medium" | "low",
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }));
 }
 
-export async function saveContext(context: Context): Promise<void> {
-  const row = {
-    id: context.id,
-    title: context.title,
-    content: context.content,
-    category_type: context.categoryType,
-    category: context.category,
-    tags: context.tags,
-    priority: context.priority,
-    created_at: context.createdAt,
-    updated_at: context.updatedAt,
-  };
-
-  const { error } = await supabase
-    .from("contexts")
-    .upsert(row, { onConflict: "id" });
-
-  if (error) {
-    console.error("Error saving context:", error);
-    throw error;
-  }
+function save(contexts: Context[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(contexts));
 }
 
-export async function deleteContext(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("contexts")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error deleting context:", error);
-    throw error;
-  }
+export function getContexts(): Context[] {
+  return load().sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
 }
 
-export async function deleteAllContexts(): Promise<void> {
-  const { error } = await supabase
-    .from("contexts")
-    .delete()
-    .neq("id", "");
-
-  if (error) {
-    console.error("Error deleting all contexts:", error);
-    throw error;
+export function saveContext(context: Context): void {
+  const all = load();
+  const idx = all.findIndex((c) => c.id === context.id);
+  if (idx >= 0) {
+    all[idx] = context;
+  } else {
+    all.unshift(context);
   }
+  save(all);
 }
 
-export async function importContexts(contexts: Context[]): Promise<void> {
-  const rows = contexts.map((c) => ({
-    id: c.id,
-    title: c.title,
-    content: c.content,
-    category_type: c.categoryType,
-    category: c.category,
-    tags: c.tags,
-    priority: c.priority,
-    created_at: c.createdAt,
-    updated_at: c.updatedAt,
-  }));
+export function deleteContext(id: string): void {
+  save(load().filter((c) => c.id !== id));
+}
 
-  const { error } = await supabase
-    .from("contexts")
-    .upsert(rows, { onConflict: "id" });
+export function deleteAllContexts(): void {
+  save([]);
+}
 
-  if (error) {
-    console.error("Error importing contexts:", error);
-    throw error;
-  }
+export function importContexts(contexts: Context[]): void {
+  const all = load();
+  const map = new Map(all.map((c) => [c.id, c]));
+  contexts.forEach((c) => map.set(c.id, c));
+  save(Array.from(map.values()));
 }
 
 export function generateId(): string {

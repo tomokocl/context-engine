@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-import { LOCKED_CATEGORIES } from "@/lib/lock-config";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { getUserLockedCategories } from "@/lib/user-settings";
 
 type LockContextType = {
   isLocked: (category: string) => boolean;
@@ -14,6 +14,10 @@ const LockContext = createContext<LockContextType>({
 });
 
 export function LockProvider({ children }: { children: ReactNode }) {
+  // ユーザーが設定した「ロック対象カテゴリ」をlocalStorageから読む
+  const [lockedCategories, setLockedCategories] = useState<string[]>([]);
+
+  // セッション中に解除したカテゴリ（ページ更新でリセット）
   const [unlockedCategories, setUnlockedCategories] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
@@ -24,8 +28,12 @@ export function LockProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  useEffect(() => {
+    setLockedCategories(getUserLockedCategories());
+  }, []);
+
   const isLocked = (category: string) =>
-    LOCKED_CATEGORIES.includes(category) && !unlockedCategories.has(category);
+    lockedCategories.includes(category) && !unlockedCategories.has(category);
 
   const unlock = (category: string) => {
     setUnlockedCategories((prev) => {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Context, Priority } from "@/lib/types";
-import { ALL_CATEGORIES } from "@/lib/categories";
 import { generateId } from "@/lib/storage";
+import { CategoryMeta } from "@/lib/category-pool";
+import { getUserCategories } from "@/lib/user-settings";
 
 interface ContextModalProps {
   initial?: Context | null;
@@ -12,14 +13,21 @@ interface ContextModalProps {
 }
 
 export default function ContextModal({ initial, onSave, onClose }: ContextModalProps) {
+  const [userCategories, setUserCategories] = useState<CategoryMeta[]>([]);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
-  const [category, setCategory] = useState<Context["category"]>(
-    initial?.category ?? ALL_CATEGORIES[0]
-  );
+  const [category, setCategory] = useState(initial?.category ?? "");
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? "medium");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+
+  useEffect(() => {
+    const cats = getUserCategories();
+    setUserCategories(cats);
+    if (!initial?.category && cats.length > 0) {
+      setCategory(cats[0].name);
+    }
+  }, [initial]);
 
   const addTag = () => {
     const t = tagInput.trim();
@@ -38,8 +46,8 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
       id: initial?.id ?? generateId(),
       title: title.trim(),
       content: content.trim(),
-      categoryType: "private", // DB互換のためデフォルト値を保持
-      category,
+      categoryType: "private",
+      category: category as Context["category"],
       priority,
       tags,
       createdAt: initial?.createdAt ?? now,
@@ -50,22 +58,14 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-text/60 backdrop-blur-sm">
       <div className="bg-surface w-full max-w-2xl mx-4 rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold text-text">
             {initial ? "コンテキストを編集" : "新しいコンテキスト"}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-text-muted hover:text-text transition-colors text-xl leading-none"
-          >
-            ×
-          </button>
+          <button onClick={onClose} className="text-text-muted hover:text-text transition-colors text-xl leading-none">×</button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-          {/* Title */}
           <div>
             <label className="block text-sm font-medium text-text mb-1">タイトル</label>
             <input
@@ -76,23 +76,21 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
             />
           </div>
 
-          {/* Category */}
           <div>
             <label className="block text-sm font-medium text-text mb-1">カテゴリ</label>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value as Context["category"])}
+              onChange={(e) => setCategory(e.target.value)}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-base focus:outline-none focus:ring-2 focus:ring-accent/50 text-text"
             >
-              {ALL_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {userCategories.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.icon} {c.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Priority */}
           <div>
             <label className="block text-sm font-medium text-text mb-1">優先度</label>
             <div className="flex gap-2">
@@ -101,9 +99,7 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
                   key={p}
                   onClick={() => setPriority(p)}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    priority === p
-                      ? "bg-accent text-white"
-                      : "bg-base-dark text-text-muted hover:bg-base-darker"
+                    priority === p ? "bg-accent text-white" : "bg-base-dark text-text-muted hover:bg-base-darker"
                   }`}
                 >
                   {p === "high" ? "高" : p === "medium" ? "中" : "低"}
@@ -112,7 +108,6 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
             </div>
           </div>
 
-          {/* Content */}
           <div>
             <label className="block text-sm font-medium text-text mb-1">内容</label>
             <textarea
@@ -124,7 +119,6 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
             />
           </div>
 
-          {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-text mb-1">タグ</label>
             <div className="flex gap-2 mb-2">
@@ -135,27 +129,14 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
                 placeholder="タグを入力してEnter"
                 className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-base focus:outline-none focus:ring-2 focus:ring-accent/50 text-text"
               />
-              <button
-                onClick={addTag}
-                className="px-4 py-2 bg-accent text-white rounded-lg text-sm hover:bg-accent-dark transition-colors"
-              >
-                追加
-              </button>
+              <button onClick={addTag} className="px-4 py-2 bg-accent text-white rounded-lg text-sm hover:bg-accent-dark transition-colors">追加</button>
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="flex items-center gap-1 text-xs bg-base-dark text-text-muted px-2 py-1 rounded-full"
-                  >
+                  <span key={tag} className="flex items-center gap-1 text-xs bg-base-dark text-text-muted px-2 py-1 rounded-full">
                     {tag}
-                    <button
-                      onClick={() => removeTag(tag)}
-                      className="hover:text-red-400 transition-colors leading-none"
-                    >
-                      ×
-                    </button>
+                    <button onClick={() => removeTag(tag)} className="hover:text-red-400 transition-colors leading-none">×</button>
                   </span>
                 ))}
               </div>
@@ -163,14 +144,8 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-2 px-6 py-4 border-t border-border">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-lg text-sm text-text-muted hover:bg-base-dark transition-colors"
-          >
-            キャンセル
-          </button>
+          <button onClick={onClose} className="px-5 py-2 rounded-lg text-sm text-text-muted hover:bg-base-dark transition-colors">キャンセル</button>
           <button
             onClick={handleSave}
             disabled={!title.trim() || !content.trim()}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ALL_CATEGORIES, CATEGORY_ICONS } from "@/lib/categories";
 import { Context } from "@/lib/types";
 import { useLock } from "@/contexts/LockContext";
 import CategoryLockModal from "./CategoryLockModal";
+import { CategoryMeta } from "@/lib/category-pool";
+import { getUserCategories } from "@/lib/user-settings";
 
 interface SidebarProps {
   contexts: Context[];
@@ -18,6 +19,11 @@ export default function Sidebar({ contexts, onCategoryFilter, activeCategory }: 
   const pathname = usePathname();
   const { isLocked, unlock } = useLock();
   const [lockModalCategory, setLockModalCategory] = useState<string | null>(null);
+  const [userCategories, setUserCategories] = useState<CategoryMeta[]>([]);
+
+  useEffect(() => {
+    setUserCategories(getUserCategories());
+  }, []);
 
   const countByCategory = (cat: string) => contexts.filter((c) => c.category === cat).length;
 
@@ -69,24 +75,23 @@ export default function Sidebar({ contexts, onCategoryFilter, activeCategory }: 
           <span className="text-accent">›</span> カテゴリ
         </button>
 
-        {ALL_CATEGORIES.map((cat) => {
-          const locked = isLocked(cat);
-          const count = countByCategory(cat);
-          const icon = CATEGORY_ICONS[cat] ?? "·";
+        {userCategories.map((cat) => {
+          const locked = isLocked(cat.name);
+          const count = countByCategory(cat.name);
 
           return (
             <button
-              key={cat}
-              onClick={() => handleCategoryClick(cat)}
+              key={cat.name}
+              onClick={() => handleCategoryClick(cat.name)}
               className={`flex items-center justify-between w-full px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
-                activeCategory === cat
+                activeCategory === cat.name
                   ? "bg-accent/20 text-accent"
                   : "text-text-light hover:text-base hover:bg-white/5"
               }`}
             >
               <span className="flex items-center gap-2">
-                <span>{icon}</span>
-                {cat}
+                <span>{cat.icon}</span>
+                {cat.name}
                 {locked && <span className="text-xs opacity-60">🔒</span>}
               </span>
               {!locked && count > 0 && (

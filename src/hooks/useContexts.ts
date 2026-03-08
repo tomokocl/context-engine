@@ -8,10 +8,8 @@ export function useContexts() {
   const [contexts, setContexts] = useState<Context[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const data = await getContexts();
-    setContexts(data);
+  const refresh = useCallback(() => {
+    setContexts(getContexts());
     setLoading(false);
   }, []);
 
@@ -20,17 +18,17 @@ export function useContexts() {
   }, [refresh]);
 
   const save = useCallback(
-    async (context: Context) => {
-      await saveContext(context);
-      await refresh();
+    (context: Context) => {
+      saveContext(context);
+      refresh();
     },
     [refresh]
   );
 
   const remove = useCallback(
-    async (id: string) => {
-      await deleteContext(id);
-      await refresh();
+    (id: string) => {
+      deleteContext(id);
+      refresh();
     },
     [refresh]
   );

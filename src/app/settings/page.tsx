@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useContexts } from "@/hooks/useContexts";
 import { deleteAllContexts, importContexts } from "@/lib/storage";
 import { Context } from "@/lib/types";
+import { resetSetup } from "@/lib/user-settings";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { contexts, refresh } = useContexts();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cleared, setCleared] = useState(false);
@@ -71,8 +74,8 @@ export default function SettingsPage() {
             <div className="grid grid-cols-3 gap-4">
               {[
                 { label: "総コンテキスト", value: contexts.length },
-                { label: "プライベート", value: contexts.filter((c) => c.categoryType === "private").length },
-                { label: "仕事", value: contexts.filter((c) => c.categoryType === "work").length },
+                { label: "カテゴリ数", value: new Set(contexts.map((c) => c.category)).size },
+                { label: "タグ数", value: new Set(contexts.flatMap((c) => c.tags)).size },
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <p className="text-2xl font-bold text-text">{s.value}</p>
@@ -97,6 +100,23 @@ export default function SettingsPage() {
                 <input type="file" accept=".json" onChange={handleImport} className="hidden" disabled={importing} />
               </label>
             </div>
+          </div>
+
+          {/* カテゴリ設定やり直し */}
+          <div className="bg-surface border border-border rounded-2xl p-6">
+            <h3 className="font-semibold text-text mb-2">カテゴリ設定</h3>
+            <p className="text-sm text-text-muted mb-4">
+              セットアップウィザードをやり直してカテゴリを変更できます。
+            </p>
+            <button
+              onClick={() => {
+                resetSetup();
+                router.push("/setup/");
+              }}
+              className="px-5 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-dark transition-colors"
+            >
+              カテゴリを再設定する
+            </button>
           </div>
 
           {/* Danger Zone */}
