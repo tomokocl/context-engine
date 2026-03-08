@@ -1,26 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-accent: #CBA890;
+  --color-accent-dark: #B8967E;
+  --color-accent-light: #D9BBA8;
+  --color-base: #EFE9E6;
+  --color-base-dark: #E0D6D1;
+  --color-base-darker: #CFC3BC;
+  --color-text: #2D2A29;
+  --color-text-muted: #6B6360;
+  --color-text-light: #9E9390;
+  --color-surface: #F7F3F1;
+  --color-surface-dark: #EAE3DF;
+  --color-border: #D9CFC9;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: 'Noto Sans JP', 'Inter', sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #EFE9E6;
+  color: #2D2A29;
+  font-family: 'Noto Sans JP', 'Inter', sans-serif;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
