@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PRIVATE_CATEGORIES, WORK_CATEGORIES } from "@/lib/categories";
-import { LOCKED_CATEGORIES } from "@/lib/lock-config";
+import { ALL_CATEGORIES, CATEGORY_ICONS } from "@/lib/categories";
 import { Context } from "@/lib/types";
 import { useLock } from "@/contexts/LockContext";
 import CategoryLockModal from "./CategoryLockModal";
@@ -63,65 +62,41 @@ export default function Sidebar({ contexts, onCategoryFilter, activeCategory }: 
       </nav>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        <div className="mb-4">
-          <button
-            onClick={() => onCategoryFilter(null)}
-            className="flex items-center gap-1 text-xs font-semibold text-text-light uppercase tracking-wider mb-2 px-3 w-full text-left hover:text-accent transition-colors"
-          >
-            <span className="text-accent">›</span> プライベート
-          </button>
-          {PRIVATE_CATEGORIES.map((cat) => {
-            const locked = isLocked(cat);
-            return (
-              <button
-                key={cat}
-                onClick={() => handleCategoryClick(cat)}
-                className={`flex items-center justify-between w-full px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
-                  activeCategory === cat
-                    ? "bg-accent/20 text-accent"
-                    : "text-text-light hover:text-base hover:bg-white/5"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  {cat}
-                  {locked && <span className="text-xs opacity-60">🔒</span>}
-                </span>
-                {!locked && countByCategory(cat) > 0 && (
-                  <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full">
-                    {countByCategory(cat)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <button
+          onClick={() => onCategoryFilter(null)}
+          className="flex items-center gap-1 text-xs font-semibold text-text-light uppercase tracking-wider mb-2 px-3 w-full text-left hover:text-accent transition-colors"
+        >
+          <span className="text-accent">›</span> カテゴリ
+        </button>
 
-        <div>
-          <button
-            onClick={() => onCategoryFilter(null)}
-            className="flex items-center gap-1 text-xs font-semibold text-text-light uppercase tracking-wider mb-2 px-3 w-full text-left hover:text-accent transition-colors"
-          >
-            <span className="text-accent">›</span> 仕事
-          </button>
-          {WORK_CATEGORIES.map((cat) => (
+        {ALL_CATEGORIES.map((cat) => {
+          const locked = isLocked(cat);
+          const count = countByCategory(cat);
+          const icon = CATEGORY_ICONS[cat] ?? "·";
+
+          return (
             <button
               key={cat}
-              onClick={() => onCategoryFilter(activeCategory === cat ? null : cat)}
+              onClick={() => handleCategoryClick(cat)}
               className={`flex items-center justify-between w-full px-3 py-1.5 rounded-lg text-sm mb-0.5 transition-colors ${
                 activeCategory === cat
                   ? "bg-accent/20 text-accent"
                   : "text-text-light hover:text-base hover:bg-white/5"
               }`}
             >
-              <span className="flex items-center gap-2">{cat}</span>
-              {countByCategory(cat) > 0 && (
+              <span className="flex items-center gap-2">
+                <span>{icon}</span>
+                {cat}
+                {locked && <span className="text-xs opacity-60">🔒</span>}
+              </span>
+              {!locked && count > 0 && (
                 <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full">
-                  {countByCategory(cat)}
+                  {count}
                 </span>
               )}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {lockModalCategory && (

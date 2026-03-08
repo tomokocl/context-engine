@@ -17,8 +17,8 @@ export default function Dashboard() {
   const [editing, setEditing] = useState<Context | null>(null);
 
   const visibleContexts = contexts.filter((c) => !isLocked(c.category));
-  const privateCount = contexts.filter((c) => c.categoryType === "private").length;
-  const workCount = contexts.filter((c) => c.categoryType === "work").length;
+  const publicCount = contexts.filter((c) => !isLocked(c.category)).length;
+  const lockedCount = contexts.filter((c) => isLocked(c.category)).length;
   const recent = visibleContexts.slice(0, 5);
 
   const handleSave = (ctx: Context) => {
@@ -57,8 +57,8 @@ export default function Dashboard() {
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
             { label: "合計コンテキスト", value: contexts.length },
-            { label: "プライベート", value: privateCount },
-            { label: "仕事", value: workCount },
+            { label: "公開中", value: publicCount },
+            { label: "ロック中", value: lockedCount },
           ].map((stat) => (
             <div key={stat.label} className="bg-surface border border-border rounded-2xl p-6 shadow-sm">
               <p className="text-sm text-text-muted mb-2">{stat.label}</p>
@@ -133,9 +133,7 @@ export default function Dashboard() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[ctx.priority]}`}>
                       {PRIORITY_LABELS[ctx.priority]}
                     </span>
-                    <span className="text-xs text-text-light">
-                      {ctx.categoryType === "private" ? "プライベート" : "仕事"}
-                    </span>
+                    
                     <button onClick={() => handleEdit(ctx)} className="opacity-0 group-hover:opacity-100 text-xs text-text-muted hover:text-accent transition-all">編集</button>
                     <button onClick={() => handleDelete(ctx.id)} className="opacity-0 group-hover:opacity-100 text-xs text-text-muted hover:text-red-400 transition-all">削除</button>
                   </div>

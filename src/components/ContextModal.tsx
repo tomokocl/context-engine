@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Context, Priority, CategoryType } from "@/lib/types";
-import { PRIVATE_CATEGORIES, WORK_CATEGORIES } from "@/lib/categories";
+import { useState } from "react";
+import { Context, Priority } from "@/lib/types";
+import { ALL_CATEGORIES } from "@/lib/categories";
 import { generateId } from "@/lib/storage";
 
 interface ContextModalProps {
@@ -14,23 +14,12 @@ interface ContextModalProps {
 export default function ContextModal({ initial, onSave, onClose }: ContextModalProps) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
-  const [categoryType, setCategoryType] = useState<CategoryType>(
-    initial?.categoryType ?? "private"
-  );
-  const [category, setCategory] = useState(
-    initial?.category ?? PRIVATE_CATEGORIES[0]
+  const [category, setCategory] = useState<Context["category"]>(
+    initial?.category ?? ALL_CATEGORIES[0]
   );
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? "medium");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
-
-  const categories = categoryType === "private" ? PRIVATE_CATEGORIES : WORK_CATEGORIES;
-
-  useEffect(() => {
-    if (!initial) {
-      setCategory(categories[0]);
-    }
-  }, [categoryType]); // eslint-disable-line
 
   const addTag = () => {
     const t = tagInput.trim();
@@ -49,8 +38,8 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
       id: initial?.id ?? generateId(),
       title: title.trim(),
       content: content.trim(),
-      categoryType,
-      category: category as Context["category"],
+      categoryType: "private", // DB互換のためデフォルト値を保持
+      category,
       priority,
       tags,
       createdAt: initial?.createdAt ?? now,
@@ -82,29 +71,9 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="例：旅行の好み"
+              placeholder="例：AIとの付き合い方の方針"
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-base focus:outline-none focus:ring-2 focus:ring-accent/50 text-text"
             />
-          </div>
-
-          {/* Category Type */}
-          <div>
-            <label className="block text-sm font-medium text-text mb-1">種別</label>
-            <div className="flex gap-2">
-              {(["private", "work"] as CategoryType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setCategoryType(t)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    categoryType === t
-                      ? "bg-accent text-white"
-                      : "bg-base-dark text-text-muted hover:bg-base-darker"
-                  }`}
-                >
-                  {t === "private" ? "プライベート" : "仕事"}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Category */}
@@ -115,7 +84,7 @@ export default function ContextModal({ initial, onSave, onClose }: ContextModalP
               onChange={(e) => setCategory(e.target.value as Context["category"])}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-base focus:outline-none focus:ring-2 focus:ring-accent/50 text-text"
             >
-              {categories.map((c) => (
+              {ALL_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

@@ -1,44 +1,27 @@
-import { PrivateCategory, WorkCategory } from "./types";
+import { Category } from "./types";
 
-export const PRIVATE_CATEGORIES: PrivateCategory[] = [
-  "旅行",
-  "食事・グルメ",
-  "人間関係",
-  "趣味",
-  "健康",
+export const ALL_CATEGORIES: Category[] = [
+  "AI・ツール活用",
+  "発信・コンテンツ",
+  "仕事・ビジネス観",
+  "スキル・成長",
+  "思想・価値観",
+  "育児・家族",
   "資産・お金",
-  "ライフスタイル",
-  "その他（プライベート）",
-];
-
-export const WORK_CATEGORIES: WorkCategory[] = [
-  "職歴",
-  "現在の仕事",
-  "スキル",
-  "プロジェクト",
-  "目標",
-  "学歴・学習",
-  "ネットワーキング",
-  "その他（仕事）",
+  "健康・身体",
+  "人間関係",
 ];
 
 export const CATEGORY_ICONS: Record<string, string> = {
-  旅行: "✈️",
-  "食事・グルメ": "🍽️",
-  人間関係: "👥",
-  趣味: "🎨",
-  健康: "💪",
+  "AI・ツール活用": "🤖",
+  "発信・コンテンツ": "📢",
+  "仕事・ビジネス観": "💼",
+  "スキル・成長": "📈",
+  "思想・価値観": "🧠",
+  "育児・家族": "👶",
   "資産・お金": "💰",
-  ライフスタイル: "🌿",
-  "その他（プライベート）": "···",
-  職歴: "📋",
-  現在の仕事: "💼",
-  スキル: "⚡",
-  プロジェクト: "📁",
-  目標: "🎯",
-  "学歴・学習": "📚",
-  ネットワーキング: "🤝",
-  "その他（仕事）": "···",
+  "健康・身体": "💪",
+  "人間関係": "👥",
 };
 
 export const PRIORITY_LABELS: Record<string, string> = {
