@@ -3,23 +3,27 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useContexts } from "@/hooks/useContexts";
+import { deleteAllContexts, importContexts } from "@/lib/storage";
+import { Context } from "@/lib/types";
 
 export default function SettingsPage() {
-  const { contexts } = useContexts();
+  const { contexts, refresh } = useContexts();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cleared, setCleared] = useState(false);
+  const [importing, setImporting] = useState(false);
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm("全コンテキストを削除します。この操作は取り消せません。続けますか？")) {
-      localStorage.removeItem("context-engine-data");
+      await deleteAllContexts();
       setCleared(true);
-      setTimeout(() => window.location.reload(), 1000);
+      await refresh();
+      setTimeout(() => setCleared(false), 2000);
     }
   };
 
   const handleExportBackup = () => {
-    const data = localStorage.getItem("context-engine-data") || "[]";
-    const blob = new Blob([data], { type: "application/json" });
+    const json = JSON.stringify(contexts, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -28,20 +32,23 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string);
         if (Array.isArray(data)) {
-          localStorage.setItem("context-engine-data", JSON.stringify(data));
+          setImporting(true);
+          await importContexts(data as Context[]);
+          await refresh();
+          setImporting(false);
           alert(`${data.length} 件のコンテキストをインポートしました`);
-          window.location.reload();
         }
       } catch {
         alert("ファイルの形式が正しくありません");
+        setImporting(false);
       }
     };
     reader.readAsText(file);
@@ -86,8 +93,8 @@ export default function SettingsPage() {
                 JSONでバックアップ
               </button>
               <label className="block w-full py-2.5 bg-surface border border-border text-text rounded-xl text-sm font-medium hover:bg-base-dark transition-colors text-center cursor-pointer">
-                JSONから復元
-                <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+                {importing ? "インポート中..." : "JSONから復元"}
+                <input type="file" accept=".json" onChange={handleImport} className="hidden" disabled={importing} />
               </label>
             </div>
           </div>
@@ -100,7 +107,7 @@ export default function SettingsPage() {
               onClick={handleClearAll}
               className="px-5 py-2 bg-red-400 text-white rounded-xl text-sm font-medium hover:bg-red-500 transition-colors"
             >
-              {cleared ? "削除しました..." : "全データを削除"}
+              {cleared ? "削除しました" : "全データを削除"}
             </button>
           </div>
         </div>

@@ -1,32 +1,98 @@
 import { Context } from "./types";
+import { supabase } from "./supabase";
 
-const STORAGE_KEY = "context-engine-data";
+export async function getContexts(): Promise<Context[]> {
+  const { data, error } = await supabase
+    .from("contexts")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-export function getContexts(): Context[] {
-  if (typeof window === "undefined") return [];
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return [];
-  try {
-    return JSON.parse(data);
-  } catch {
+  if (error) {
+    console.error("Error fetching contexts:", error);
     return [];
   }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    categoryType: row.category_type as "private" | "work",
+    category: row.category,
+    tags: row.tags || [],
+    priority: row.priority as "high" | "medium" | "low",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
 }
 
-export function saveContext(context: Context): void {
-  const contexts = getContexts();
-  const idx = contexts.findIndex((c) => c.id === context.id);
-  if (idx >= 0) {
-    contexts[idx] = context;
-  } else {
-    contexts.unshift(context);
+export async function saveContext(context: Context): Promise<void> {
+  const row = {
+    id: context.id,
+    title: context.title,
+    content: context.content,
+    category_type: context.categoryType,
+    category: context.category,
+    tags: context.tags,
+    priority: context.priority,
+    created_at: context.createdAt,
+    updated_at: context.updatedAt,
+  };
+
+  const { error } = await supabase
+    .from("contexts")
+    .upsert(row, { onConflict: "id" });
+
+  if (error) {
+    console.error("Error saving context:", error);
+    throw error;
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(contexts));
 }
 
-export function deleteContext(id: string): void {
-  const contexts = getContexts().filter((c) => c.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(contexts));
+export async function deleteContext(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("contexts")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting context:", error);
+    throw error;
+  }
+}
+
+export async function deleteAllContexts(): Promise<void> {
+  const { error } = await supabase
+    .from("contexts")
+    .delete()
+    .neq("id", "");
+
+  if (error) {
+    console.error("Error deleting all contexts:", error);
+    throw error;
+  }
+}
+
+export async function importContexts(contexts: Context[]): Promise<void> {
+  const rows = contexts.map((c) => ({
+    id: c.id,
+    title: c.title,
+    content: c.content,
+    category_type: c.categoryType,
+    category: c.category,
+    tags: c.tags,
+    priority: c.priority,
+    created_at: c.createdAt,
+    updated_at: c.updatedAt,
+  }));
+
+  const { error } = await supabase
+    .from("contexts")
+    .upsert(rows, { onConflict: "id" });
+
+  if (error) {
+    console.error("Error importing contexts:", error);
+    throw error;
+  }
 }
 
 export function generateId(): string {

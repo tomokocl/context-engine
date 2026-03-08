@@ -6,20 +6,34 @@ import { getContexts, saveContext, deleteContext } from "@/lib/storage";
 
 export function useContexts() {
   const [contexts, setContexts] = useState<Context[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const data = await getContexts();
+    setContexts(data);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    setContexts(getContexts());
-  }, []);
+    refresh();
+  }, [refresh]);
 
-  const save = useCallback((context: Context) => {
-    saveContext(context);
-    setContexts(getContexts());
-  }, []);
+  const save = useCallback(
+    async (context: Context) => {
+      await saveContext(context);
+      await refresh();
+    },
+    [refresh]
+  );
 
-  const remove = useCallback((id: string) => {
-    deleteContext(id);
-    setContexts(getContexts());
-  }, []);
+  const remove = useCallback(
+    async (id: string) => {
+      await deleteContext(id);
+      await refresh();
+    },
+    [refresh]
+  );
 
-  return { contexts, save, remove };
+  return { contexts, loading, save, remove, refresh };
 }
