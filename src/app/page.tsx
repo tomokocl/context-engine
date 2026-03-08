@@ -7,16 +7,19 @@ import ContextModal from "@/components/ContextModal";
 import { useContexts } from "@/hooks/useContexts";
 import { Context } from "@/lib/types";
 import { CATEGORY_ICONS, PRIORITY_COLORS, PRIORITY_LABELS } from "@/lib/categories";
+import { useLock } from "@/contexts/LockContext";
 
 export default function Dashboard() {
   const { contexts, save, remove } = useContexts();
+  const { isLocked } = useLock();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Context | null>(null);
 
+  const visibleContexts = contexts.filter((c) => !isLocked(c.category));
   const privateCount = contexts.filter((c) => c.categoryType === "private").length;
   const workCount = contexts.filter((c) => c.categoryType === "work").length;
-  const recent = contexts.slice(0, 5);
+  const recent = visibleContexts.slice(0, 5);
 
   const handleSave = (ctx: Context) => {
     save(ctx);
@@ -38,7 +41,6 @@ export default function Dashboard() {
       <Sidebar contexts={contexts} onCategoryFilter={setActiveCategory} activeCategory={activeCategory} />
 
       <main className="flex-1 p-8 overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-semibold text-text">ダッシュボード</h2>
@@ -52,7 +54,6 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
             { label: "合計コンテキスト", value: contexts.length },
@@ -66,7 +67,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <button
             onClick={() => { setEditing(null); setModalOpen(true); }}
@@ -96,7 +96,6 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Recent */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-text">最近のコンテキスト</h3>

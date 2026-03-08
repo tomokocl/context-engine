@@ -6,15 +6,18 @@ import ContextCard from "@/components/ContextCard";
 import ContextModal from "@/components/ContextModal";
 import { useContexts } from "@/hooks/useContexts";
 import { Context } from "@/lib/types";
+import { useLock } from "@/contexts/LockContext";
 
 export default function ContextsPage() {
   const { contexts, save, remove } = useContexts();
+  const { isLocked } = useLock();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Context | null>(null);
 
   const filtered = contexts.filter((c) => {
+    if (isLocked(c.category)) return false;
     const matchCat = !activeCategory || c.category === activeCategory;
     const matchSearch =
       !search ||
@@ -48,7 +51,6 @@ export default function ContextsPage() {
           </button>
         </div>
 
-        {/* Search */}
         <div className="mb-6">
           <input
             value={search}
@@ -58,7 +60,13 @@ export default function ContextsPage() {
           />
         </div>
 
-        {filtered.length === 0 ? (
+        {activeCategory && isLocked(activeCategory) ? (
+          <div className="bg-surface border border-border rounded-2xl p-12 text-center">
+            <div className="text-3xl mb-3">🔒</div>
+            <p className="text-text-muted">このカテゴリはロックされています</p>
+            <p className="text-sm text-text-light mt-1">サイドバーのカテゴリをクリックして解除してください</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="bg-surface border border-dashed border-border rounded-2xl p-12 text-center">
             <p className="text-text-muted mb-3">
               {search || activeCategory ? "条件に一致するコンテキストがありません" : "まだコンテキストがありません"}
